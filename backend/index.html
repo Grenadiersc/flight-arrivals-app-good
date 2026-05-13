@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Site de Scott Claessens</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">✈</div>
+
+      <div>
+        <h2>Site de Scott Claessens</h2>
+        <p>Flight Board • Live arrivals</p>
+      </div>
+    </div>
+
+    <div class="clock-card">
+      <span>Heure locale</span>
+      <div id="clock" class="clock">--:--:--</div>
+      <p id="date" class="date"></p>
+    </div>
+
+    <div class="hint">
+      <p>Codes exemples :</p>
+      <div class="chips">
+        <span>TLS</span>
+        <span>CDG</span>
+        <span>ORY</span>
+        <span>NCE</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="hero">
+      <p class="subtitle">Aéroport sélectionné</p>
+      <h1>Arrivées des avions</h1>
+
+      <div class="search">
+        <input id="airportInput" placeholder="Entrer un code aéroport : TLS, CDG, NCE...">
+        <button onclick="loadFlights()">Rechercher</button>
+      </div>
+    </section>
+
+    <div id="results" class="results"></div>
+  </main>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
