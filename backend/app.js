@@ -70,7 +70,7 @@ async function loadFlights() {
   results.innerHTML = `<div class="loading-card">Chargement des vols pour ${airport}...</div>`;
 
   try {
-    const response = await fetch(`http://localhost:3000/api/arrivals/${airport}`);
+    const response = await fetch(`https://flight-arrivals-app-good.onrender.com/api/arrivals/${airport}`);
     const flights = await response.json();
 
     if (!Array.isArray(flights) || flights.length === 0) {
