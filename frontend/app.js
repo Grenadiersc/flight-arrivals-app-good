@@ -1,4 +1,21 @@
+const AIRPORT_MAP = {
+  toulouse: "TLS",
+  nice: "NCE",
+  paris: "CDG",
+  orly: "ORY",
+  marseille: "MRS",
+  lyon: "LYS",
+  londres: "LHR",
+  london: "LHR",
+  luton: "LTN",
+  dubai: "DXB",
+  tokyo: "HND",
+  singapour: "SIN",
+  singapore: "SIN"
+};
+
 function updateClock() {
+
   const now = new Date();
 
   document.getElementById("clock").textContent =
@@ -20,108 +37,139 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-async function loadFlights() {
-  const airport = document
-    .getElementById("airportInput")
-    .value
-    .trim()
-    .toUpperCase();
+function getAirportCode(value) {
 
+  const text = value.trim().toLowerCase();
+
+  if (text.length === 3) {
+    return text.toUpperCase();
+  }
+
+  return AIRPORT_MAP[text] || text.toUpperCase();
+}
+
+function formatDate(dateString) {
+
+  if (!dateString) return "N/A";
+
+  return new Date(dateString).toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+async function loadFlights() {
+
+  const input = document.getElementById("airportInput");
   const results = document.getElementById("results");
 
+  const airport = getAirportCode(input.value);
+
   if (!airport) {
-    results.innerHTML = "<p class='empty'>Entre un code aéroport.</p>";
+
+    results.innerHTML = `
+      <div class="empty">
+        Entre une ville ou un code IATA.
+      </div>
+    `;
+
     return;
   }
 
   results.innerHTML = `
     <div class="loading-card">
-      <div class="loader"></div>
-      <p>Chargement des vols pour ${airport}...</p>
+      Chargement des vols pour ${airport}...
     </div>
   `;
 
   try {
+
     const response = await fetch(
-      `http://localhost:3000/api/arrivals/${airport}`
+      `https://flight-arrivals-app-good.onrender.com/api/arrivals/${airport}`
     );
+
+    if (!response.ok) {
+
+      const text = await response.text();
+
+      throw new Error(`API ${response.status} - ${text}`);
+    }
 
     const flights = await response.json();
 
     if (!Array.isArray(flights) || flights.length === 0) {
-      results.innerHTML = "<p class='empty'>Aucun vol à venir trouvé.</p>";
+
+      results.innerHTML = `
+        <div class="empty">
+          Aucun vol trouvé pour ${airport}.
+        </div>
+      `;
+
       return;
     }
 
-    results.innerHTML = flights
-      .map(f => {
-        const status = String(f.status || "").toLowerCase();
+    results.innerHTML = flights.map(f => {
 
-        const isCancelled = status.includes("cancel");
-        const isDelayed = status.includes("delayed");
+      const status = String(f.status || "").toLowerCase();
 
-        let cardClass = "flight-card on-time";
-        let badge = "À l'heure";
-        let badgeIcon = "●";
-        let arrivalText = "Heure inconnue";
+      const delayed = status.includes("delay");
+      const cancelled = status.includes("cancel");
 
-        if (isCancelled) {
-          cardClass = "flight-card cancelled";
-          badge = "Annulé";
-          badgeIcon = "■";
-          arrivalText = "Vol annulé";
-        } else if (isDelayed) {
-          cardClass = "flight-card delayed";
-          badge = "En retard";
-          badgeIcon = "●";
-        }
+      let cardClass = "flight-card";
+      let badge = "À l'heure";
 
-        if (!isCancelled && f.minutesToArrival !== null) {
-          if (f.minutesToArrival === 0) {
-            arrivalText = "Arrivée imminente";
-          } else {
-            arrivalText = `Arrive dans ${f.minutesToArrival} min`;
-          }
-        }
+      if (delayed) {
+        cardClass += " delayed";
+        badge = "En retard";
+      }
 
-        const flightradarUrl =
-          `https://www.flightradar24.com/data/flights/${f.flightNumber.toLowerCase().replace(/\s/g, "")}`;
+      if (cancelled) {
+        cardClass += " cancelled";
+        badge = "Annulé";
+      }
 
-        return `
-          <article class="${cardClass}">
-            <div class="status-bar"></div>
+      const flightId = String(f.flightNumber || "")
+        .toLowerCase()
+        .replace(/\s/g, "");
+
+      return `
+        <article class="${cardClass}">
+
+          <div class="flight-content">
 
             <div class="flight-top">
+
               <div>
                 <span class="flight-label">Vol</span>
-                <h2>${f.flightNumber}</h2>
+                <h3>${f.flightNumber}</h3>
               </div>
 
-              <span class="badge">
-                <span>${badgeIcon}</span>
+              <div class="badge">
                 ${badge}
-              </span>
+              </div>
+
             </div>
 
             <div class="route">
-              <div class="city">
+
+              <div>
                 <span>Départ</span>
                 <strong>${f.from}</strong>
               </div>
 
-              <div class="route-line">
-                <span></span>
-                <div class="plane">✈</div>
-                <span></span>
-              </div>
+              <div class="arrow">✈</div>
 
-              <div class="city right">
+              <div>
                 <span>Arrivée</span>
                 <strong>${f.to}</strong>
               </div>
+
             </div>
 
             <div class="info-grid">
+
               <div class="info">
                 <span>Compagnie</span>
                 <strong>${f.airline}</strong>
@@ -134,42 +182,78 @@ async function loadFlights() {
 
               <div class="info highlight">
                 <span>Temps restant</span>
-                <strong>${arrivalText}</strong>
+
+                <strong>
+                  ${
+                    f.minutesToArrival !== null
+                      ? `Arrive dans ${f.minutesToArrival} min`
+                      : "N/A"
+                  }
+                </strong>
               </div>
+
             </div>
 
-            <div class="time-row">
-              <div>
-                <span>Heure prévue</span>
-                <strong>${formatDate(f.scheduledTime)}</strong>
+            <div class="bottom-row">
+
+              <div class="time-row">
+
+                <div class="time-box">
+                  <span>Heure prévue</span>
+
+                  <strong>
+                    ${formatDate(f.scheduledTime)}
+                  </strong>
+                </div>
+
+                <div class="time-box">
+                  <span>Heure estimée</span>
+
+                  <strong>
+                    ${formatDate(f.estimatedTime || f.actualTime)}
+                  </strong>
+                </div>
+
               </div>
 
-              <div>
-                <span>Heure estimée</span>
-                <strong>${formatDate(f.estimatedTime || f.actualTime)}</strong>
-              </div>
+              <a
+                class="flight-link"
+                target="_blank"
+                href="https://www.flightradar24.com/data/flights/${flightId}"
+              >
+                Suivre ce vol
+              </a>
+
             </div>
 
-            <a class="flight-link" href="${flightradarUrl}" target="_blank">
-              Suivre ce vol sur Flightradar24
-            </a>
-          </article>
-        `;
-      })
-      .join("");
+          </div>
+
+        </article>
+      `;
+
+    }).join("");
 
   } catch (err) {
-    results.innerHTML = "<p class='empty'>Erreur lors du chargement.</p>";
+
+    console.error(err);
+
+    results.innerHTML = `
+      <div class="empty">
+        Erreur lors du chargement :
+        <br><br>
+        ${err.message}
+      </div>
+    `;
   }
 }
 
-function formatDate(dateString) {
-  if (!dateString) return "N/A";
+document
+  .getElementById("airportInput")
+  .addEventListener("keydown", e => {
 
-  return new Date(dateString).toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
+    if (e.key === "Enter") {
+      loadFlights();
+    }
   });
-}
+
+loadFlights();
