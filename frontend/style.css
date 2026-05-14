@@ -870,3 +870,14 @@ body {
     background-position: -200% 0;
   }
 }
+
+.iata-row {
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.iata-row:hover {
+  background: #edf4ff;
+  padding-left: 8px;
+  border-radius: 10px;
+}

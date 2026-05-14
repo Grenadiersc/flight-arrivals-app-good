@@ -183,6 +183,7 @@ async function loadFlights() {
   }
 
   input.value = airport;
+  savePreferences(airport);
   summary.innerHTML = "";
 
   results.innerHTML = `
@@ -351,8 +352,47 @@ document.getElementById("airportInput").addEventListener("keydown", e => {
   }
 });
 
-document.getElementById("results").innerHTML = `
-  <div class="empty">
-    Entrez un aéroport pour afficher les vols.
-  </div>
-`;
+loadPreferences();
+
+if (!localStorage.getItem("lastAirport")) {
+  document.getElementById("results").innerHTML = `
+    <div class="empty">
+      Entrez un aéroport ou cliquez sur un code IATA pour afficher les vols.
+    </div>
+  `;
+}
+
+function savePreferences(airport) {
+  localStorage.setItem("lastAirport", airport);
+  localStorage.setItem("lastDirection", currentDirection);
+}
+
+function loadPreferences() {
+  const savedAirport = localStorage.getItem("lastAirport");
+  const savedDirection = localStorage.getItem("lastDirection");
+
+  if (savedDirection === "departures" || savedDirection === "arrivals") {
+    currentDirection = savedDirection;
+  }
+
+  if (savedAirport) {
+    document.getElementById("airportInput").value = savedAirport;
+  }
+
+  document
+    .getElementById("arrivalsBtn")
+    .classList.toggle("active", currentDirection === "arrivals");
+
+  document
+    .getElementById("departuresBtn")
+    .classList.toggle("active", currentDirection === "departures");
+
+  if (savedAirport) {
+    loadFlights();
+  }
+}
+
+function quickSearch(code) {
+  document.getElementById("airportInput").value = code;
+  loadFlights();
+}
