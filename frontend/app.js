@@ -153,6 +153,14 @@ function getStatusData(statusText) {
     };
   }
 
+  if (status.includes("early")) {
+    return {
+      className: "early",
+      label: "En avance",
+      icon: "↗"
+    };
+  }
+
   return {
     className: "on-time",
     label: "À l'heure",

@@ -66,9 +66,18 @@ app.get("/api/flights/:iata/:direction", async (req, res) => {
 
         let statusText = flight.status || "Unknown";
 
-        if (scheduledTime && estimatedTime && scheduledTime !== estimatedTime) {
-          statusText += " (Delayed)";
-        }
+        if (scheduledTime && estimatedTime) {
+  const scheduled = new Date(scheduledTime);
+  const estimated = new Date(estimatedTime);
+
+  const diffMinutes = Math.round((estimated - scheduled) / 60000);
+
+  if (diffMinutes >= 5) {
+    statusText = "Delayed";
+  } else if (diffMinutes <= -5) {
+    statusText = "Early";
+  }
+}
 
         return {
           flightNumber: flight.number || flight.callsign || "N/A",

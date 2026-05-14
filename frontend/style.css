@@ -1371,3 +1371,10 @@ body.dark-mode .modal-card span {
   }
 
 }
+.flight-card.early {
+  border-left-color: #0ea5e9;
+}
+
+.early .badge {
+  background: #0ea5e9;
+}
