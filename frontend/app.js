@@ -430,7 +430,7 @@ async function loadFlights(isAutoRefresh = false) {
     updateLastRefresh();
 
     results.innerHTML = flights
-      .map((f, index) => {
+      .map((f => {
         const statusData = getStatusData(f.status);
 
         const flightId = String(f.flightNumber || "")
@@ -603,5 +603,24 @@ document.addEventListener("click", e => {
   }
 });
 
+
+
+function applySavedTheme() {
+  const savedTheme = localStorage.getItem("theme");
+
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark-mode");
+  }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark-mode");
+
+  const isDark = document.body.classList.contains("dark-mode");
+
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+}
+
+applySavedTheme();
 loadPreferences();
 startAutoRefresh();

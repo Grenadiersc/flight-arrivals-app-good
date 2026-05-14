@@ -1036,3 +1036,136 @@ body {
   object-fit: contain;
   display: block;
 }
+
+/* PHASE 5.3 - DARK MODE AVIATION */
+
+.theme-toggle {
+  margin-top: 10px;
+  border: none;
+  background: #edf4ff;
+  color: #2563eb;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  background: #dbeafe;
+}
+
+body.dark-mode {
+  background: linear-gradient(135deg, #020617, #0f172a);
+  color: #e5eefb;
+}
+
+body.dark-mode .sidebar {
+  background: rgba(2, 6, 23, 0.92);
+  border-right-color: #1e293b;
+}
+
+body.dark-mode .brand h1,
+body.dark-mode .hero h2,
+body.dark-mode .flight-top h3,
+body.dark-mode .route strong,
+body.dark-mode .summary-card strong,
+body.dark-mode .info strong,
+body.dark-mode .time-box strong {
+  color: #f8fafc;
+}
+
+body.dark-mode .brand p,
+body.dark-mode .date,
+body.dark-mode .last-refresh,
+body.dark-mode .route span,
+body.dark-mode .flight-label,
+body.dark-mode .info span,
+body.dark-mode .time-box span {
+  color: #94a3b8;
+}
+
+body.dark-mode .sidebar-card,
+body.dark-mode .hero,
+body.dark-mode .summary-card,
+body.dark-mode .flight-card,
+body.dark-mode .loading-card,
+body.dark-mode .empty {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: #1e293b;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
+}
+
+body.dark-mode .info,
+body.dark-mode .time-box {
+  background: rgba(30, 41, 59, 0.88);
+}
+
+body.dark-mode .search input {
+  background: #020617;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+body.dark-mode .search input::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode .suggestions {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-mode .suggestion-item:hover {
+  background: #1e293b;
+}
+
+body.dark-mode .suggestion-item span {
+  color: #94a3b8;
+}
+
+body.dark-mode .iata-row {
+  border-bottom-color: #1e293b;
+}
+
+body.dark-mode .iata-row:hover {
+  background: #1e293b;
+}
+
+body.dark-mode .tab {
+  background: #0f172a;
+  color: #60a5fa;
+  border-color: #334155;
+}
+
+body.dark-mode .tab.active {
+  background: #2563eb;
+  color: white;
+}
+
+body.dark-mode .theme-toggle {
+  background: #1e293b;
+  color: #93c5fd;
+}
+
+body.dark-mode .airline-logo {
+  background: #f8fafc;
+  border-color: #334155;
+}
+
+body.dark-mode .skeleton-card {
+  background: linear-gradient(
+    90deg,
+    #0f172a 0%,
+    #1e293b 45%,
+    #0f172a 90%
+  );
+  background-size: 200% 100%;
+  border-left-color: #334155;
+}
+
+body.dark-mode .flight-link,
+body.dark-mode .search button {
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+}
