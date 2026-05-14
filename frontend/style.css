@@ -404,3 +404,148 @@ body {
     text-align: center;
   }
 }
+
+/* RESPONSIVE GLOBAL */
+
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .hero h2 {
+    font-size: 38px;
+  }
+
+  .search input {
+    width: 260px;
+  }
+
+  .clock {
+    font-size: 36px;
+  }
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #cfe0ff;
+  }
+
+  .sidebar-card {
+    padding: 18px;
+  }
+
+  .main {
+    padding: 18px;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px;
+  }
+
+  .hero h2 {
+    font-size: 36px;
+  }
+
+  .search {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .search input,
+  .search button {
+    width: 100%;
+  }
+
+  .flight-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .badge {
+    width: fit-content;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .time-row {
+    flex-direction: column;
+  }
+
+  .flight-link {
+    text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .sidebar {
+    padding: 16px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand p {
+    font-size: 13px;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .clock {
+    font-size: 34px;
+  }
+
+  .hero {
+    border-radius: 22px;
+  }
+
+  .hero h2 {
+    font-size: 32px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+  }
+
+  .flight-card {
+    border-radius: 20px;
+  }
+
+  .flight-content {
+    padding: 18px;
+  }
+
+  .flight-top h3 {
+    font-size: 34px;
+  }
+
+  .route {
+    gap: 14px;
+  }
+
+  .route strong {
+    font-size: 24px;
+  }
+
+  .info strong {
+    font-size: 16px;
+  }
+}
