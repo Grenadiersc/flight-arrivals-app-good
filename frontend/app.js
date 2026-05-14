@@ -342,11 +342,65 @@ function renderSummary(flights, airport) {
 }
 
 function openFlightDetails(flight) {
-  alert(
-    `Vol ${flight.flightNumber}\n\n` +
-    `Compagnie : ${flight.airline}\n` +
-    `Statut : ${flight.status}`
-  );
+
+  const modal = document.getElementById("flightModal");
+  const content = document.getElementById("modalContent");
+
+  content.innerHTML = `
+    <div class="modal-header">
+
+      <div class="modal-flight">
+
+        <div class="modal-flight-number">
+          ${flight.flightNumber}
+        </div>
+
+        <div class="modal-airline">
+          ${flight.airline}
+        </div>
+
+      </div>
+
+      <div class="modal-status">
+        ${flight.status || "Unknown"}
+      </div>
+
+    </div>
+
+    <div class="modal-grid">
+
+      <div class="modal-card">
+        <span>Compagnie</span>
+        <strong>${flight.airline}</strong>
+      </div>
+
+      <div class="modal-card">
+        <span>Statut</span>
+        <strong>${flight.status || "Unknown"}</strong>
+      </div>
+
+      <div class="modal-card">
+        <span>Heure prévue</span>
+        <strong>${formatDate(flight.scheduledTime)}</strong>
+      </div>
+
+      <div class="modal-card">
+        <span>Heure estimée</span>
+        <strong>${formatDate(
+          flight.estimatedTime || flight.actualTime
+        )}</strong>
+      </div>
+
+    </div>
+  `;
+
+  modal.classList.add("show");
+}
+
+function closeFlightModal() {
+  document
+    .getElementById("flightModal")
+    .classList.remove("show");
 }
 
 async function loadFlights(isAutoRefresh = false) {
