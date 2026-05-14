@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://flight-arrivals-app-good.onrender.com";
+const API_BASE_URL = "https://flight-arrivals-app-good-2.onrender.com";
 
 let currentDirection = localStorage.getItem("lastDirection") || "arrivals";
 let autoRefreshInterval = null;
