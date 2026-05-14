@@ -124,21 +124,54 @@ function getStatusData(statusText) {
   if (status.includes("cancel")) {
     return {
       className: "cancelled",
-      label: "Annulé"
+      label: "Annulé",
+      icon: "✖"
     };
   }
 
   if (status.includes("delay")) {
     return {
       className: "delayed",
-      label: "En retard"
+      label: "En retard",
+      icon: "⏱"
     };
   }
 
   return {
     className: "on-time",
-    label: "À l'heure"
+    label: "À l'heure",
+    icon: "●"
   };
+}
+
+function getAirlineInitials(name) {
+  const clean = String(name || "Unknown").trim();
+
+  if (!clean || clean === "Unknown") return "?";
+
+  return clean
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getTimeDetail(minutes, direction) {
+  if (minutes === null || minutes === undefined) {
+    return "Horaire indisponible";
+  }
+
+  if (minutes <= 0) {
+    return direction === "arrivals" ? "Arrivée imminente" : "Départ imminent";
+  }
+
+  if (direction === "arrivals") {
+    return `Arrive dans ${minutes} min`;
+  }
+
+  return `Départ dans ${minutes} min`;
 }
 
 function showSuggestions() {
@@ -289,6 +322,20 @@ function renderSummary(flights, airport) {
   `;
 }
 
+function openFlightDetails(flight) {
+  const detail = encodeURIComponent(JSON.stringify(flight));
+
+  sessionStorage.setItem("selectedFlight", detail);
+
+  alert(
+    `Détails du vol ${flight.flightNumber}\n\n` +
+    `Compagnie : ${flight.airline}\n` +
+    `Statut : ${flight.status}\n` +
+    `Horaire prévu : ${formatDate(flight.scheduledTime)}\n` +
+    `Horaire estimé : ${formatDate(flight.estimatedTime || flight.actualTime)}`
+  );
+}
+
 async function loadFlights(isAutoRefresh = false) {
   const input = document.getElementById("airportInput");
   const results = document.getElementById("results");
@@ -347,7 +394,7 @@ async function loadFlights(isAutoRefresh = false) {
     updateLastRefresh();
 
     results.innerHTML = flights
-      .map(f => {
+      .map((f, index) => {
         const statusData = getStatusData(f.status);
 
         const flightId = String(f.flightNumber || "")
@@ -371,12 +418,21 @@ async function loadFlights(isAutoRefresh = false) {
           rightValue = f.airport;
         }
 
-        const remainingText =
-          f.minutesToFlight !== null
-            ? currentDirection === "arrivals"
-              ? `Arrive dans ${f.minutesToFlight} min`
-              : `Départ dans ${f.minutesToFlight} min`
-            : "N/A";
+        const remainingText = getTimeDetail(f.minutesToFlight, currentDirection);
+        const modeLabel = currentDirection === "arrivals" ? "Arrivée" : "Départ";
+        const airlineInitials = getAirlineInitials(f.airline);
+
+        const safeFlight = {
+          flightNumber: f.flightNumber,
+          airline: f.airline,
+          status: f.status,
+          scheduledTime: f.scheduledTime,
+          estimatedTime: f.estimatedTime,
+          actualTime: f.actualTime,
+          airport: f.airport,
+          selectedAirport: f.selectedAirport,
+          direction: f.direction
+        };
 
         return `
           <article class="flight-card ${statusData.className}">
@@ -385,12 +441,17 @@ async function loadFlights(isAutoRefresh = false) {
 
               <div class="flight-top">
 
-                <div>
-                  <span class="flight-label">Vol</span>
-                  <h3>${f.flightNumber}</h3>
+                <div class="flight-title-row">
+                  <div class="airline-logo">${airlineInitials}</div>
+
+                  <div>
+                    <span class="flight-label">${modeLabel}</span>
+                    <h3>${f.flightNumber}</h3>
+                  </div>
                 </div>
 
                 <div class="badge">
+                  <span>${statusData.icon}</span>
                   ${statusData.label}
                 </div>
 
@@ -447,13 +508,22 @@ async function loadFlights(isAutoRefresh = false) {
 
                 </div>
 
-                <a
-                  class="flight-link"
-                  target="_blank"
-                  href="https://www.flightradar24.com/data/flights/${flightId}"
-                >
-                  Suivre ce vol
-                </a>
+                <div class="action-row">
+                  <button
+                    class="detail-btn"
+                    onclick='openFlightDetails(${JSON.stringify(safeFlight)})'
+                  >
+                    Détails
+                  </button>
+
+                  <a
+                    class="flight-link"
+                    target="_blank"
+                    href="https://www.flightradar24.com/data/flights/${flightId}"
+                  >
+                    Suivre
+                  </a>
+                </div>
 
               </div>
 

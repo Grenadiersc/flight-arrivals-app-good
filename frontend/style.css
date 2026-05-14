@@ -939,3 +939,82 @@ body {
   padding-left: 8px;
   border-radius: 10px;
 }
+
+/* PHASE 5.2 - RICH FLIGHT CARDS */
+
+.flight-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.airline-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 17px;
+  flex-shrink: 0;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.detail-btn {
+  border: none;
+  background: #edf4ff;
+  color: #2563eb;
+  padding: 13px 18px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.detail-btn:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+.flight-link {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+@media (max-width: 700px) {
+  .flight-title-row {
+    align-items: flex-start;
+  }
+
+  .airline-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  .action-row {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .detail-btn,
+  .flight-link {
+    width: 100%;
+    text-align: center;
+  }
+}
