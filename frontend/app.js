@@ -18,6 +18,17 @@ const AIRPORT_MAP = {
   singapore: "SIN"
 };
 
+const AIRPORT_NAMES = {
+  TLS: "Toulouse",
+  CDG: "Paris CDG",
+  ORY: "Paris Orly",
+  NCE: "Nice",
+  MRS: "Marseille",
+  LYS: "Lyon",
+  LHR: "Londres Heathrow",
+  LTN: "Londres Luton"
+};
+
 function updateClock() {
   const now = new Date();
 
@@ -46,7 +57,11 @@ function setDirection(direction) {
   document.getElementById("arrivalsBtn").classList.toggle("active", direction === "arrivals");
   document.getElementById("departuresBtn").classList.toggle("active", direction === "departures");
 
-  loadFlights();
+  const input = document.getElementById("airportInput");
+
+  if (input.value.trim() !== "") {
+    loadFlights();
+  }
 }
 
 function getAirportCode(value) {
@@ -57,6 +72,10 @@ function getAirportCode(value) {
   }
 
   return AIRPORT_MAP[text] || text.toUpperCase();
+}
+
+function getAirportDisplay(code) {
+  return `${AIRPORT_NAMES[code] || code} (${code})`;
 }
 
 function formatDate(dateString) {
@@ -92,7 +111,6 @@ function renderSummary(flights, airport) {
   ).length;
 
   const nextFlight = flights[0];
-
   const directionLabel = currentDirection === "arrivals" ? "arrivées" : "départs";
 
   summary.innerHTML = `
@@ -113,7 +131,7 @@ function renderSummary(flights, airport) {
 
     <div class="summary-card">
       <span>Aéroport</span>
-      <strong>${airport}</strong>
+      <strong>${getAirportDisplay(airport)}</strong>
     </div>
   `;
 }
@@ -132,13 +150,12 @@ async function loadFlights() {
   }
 
   input.value = airport;
-
   summary.innerHTML = "";
 
   results.innerHTML = `
     <div class="loading-card">
       <div class="loader"></div>
-      <p>Chargement des ${currentDirection === "arrivals" ? "arrivées" : "départs"} pour ${airport}...</p>
+      <p>Chargement des ${currentDirection === "arrivals" ? "arrivées" : "départs"} pour ${getAirportDisplay(airport)}...</p>
     </div>
   `;
 
@@ -153,7 +170,7 @@ async function loadFlights() {
     const flights = await response.json();
 
     if (!Array.isArray(flights) || flights.length === 0) {
-      results.innerHTML = `<div class="empty">Aucun vol trouvé pour ${airport}.</div>`;
+      results.innerHTML = `<div class="empty">Aucun vol trouvé pour ${getAirportDisplay(airport)}.</div>`;
       return;
     }
 
@@ -166,8 +183,22 @@ async function loadFlights() {
         .toLowerCase()
         .replace(/\s/g, "");
 
-      const airportLabel = currentDirection === "arrivals" ? "Départ" : "Destination";
-      const selectedLabel = currentDirection === "arrivals" ? "Arrivée" : "Départ";
+      let leftLabel;
+      let leftValue;
+      let rightLabel;
+      let rightValue;
+
+      if (currentDirection === "arrivals") {
+        leftLabel = "Départ de";
+        leftValue = f.airport;
+        rightLabel = "Arrivée à";
+        rightValue = getAirportDisplay(f.selectedAirport);
+      } else {
+        leftLabel = "Départ de";
+        leftValue = getAirportDisplay(f.selectedAirport);
+        rightLabel = "Destination";
+        rightValue = f.airport;
+      }
 
       const remainingText =
         f.minutesToFlight !== null
@@ -191,15 +222,15 @@ async function loadFlights() {
 
             <div class="route">
               <div>
-                <span>${airportLabel}</span>
-                <strong>${f.airport}</strong>
+                <span>${leftLabel}</span>
+                <strong>${leftValue}</strong>
               </div>
 
               <div class="arrow">✈</div>
 
               <div>
-                <span>${selectedLabel}</span>
-                <strong>${f.selectedAirport}</strong>
+                <span>${rightLabel}</span>
+                <strong>${rightValue}</strong>
               </div>
             </div>
 
@@ -266,4 +297,8 @@ document.getElementById("airportInput").addEventListener("keydown", e => {
   }
 });
 
-loadFlights();
+document.getElementById("results").innerHTML = `
+  <div class="empty">
+    Entrez un aéroport pour afficher les vols.
+  </div>
+`;
