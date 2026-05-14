@@ -1,3 +1,5 @@
+const API_BASE_URL = "https://flight-arrivals-app-good.onrender.com";
+
 const AIRPORT_MAP = {
   toulouse: "TLS",
   nice: "NCE",
@@ -15,7 +17,6 @@ const AIRPORT_MAP = {
 };
 
 function updateClock() {
-
   const now = new Date();
 
   document.getElementById("clock").textContent =
@@ -38,7 +39,6 @@ setInterval(updateClock, 1000);
 updateClock();
 
 function getAirportCode(value) {
-
   const text = value.trim().toLowerCase();
 
   if (text.length === 3) {
@@ -49,7 +49,6 @@ function getAirportCode(value) {
 }
 
 function formatDate(dateString) {
-
   if (!dateString) return "N/A";
 
   return new Date(dateString).toLocaleString("fr-FR", {
@@ -60,100 +59,89 @@ function formatDate(dateString) {
   });
 }
 
-async function loadFlights() {
+function getStatusData(statusText) {
+  const status = String(statusText || "").toLowerCase();
 
+  if (status.includes("cancel")) {
+    return {
+      className: "cancelled",
+      label: "Annulé"
+    };
+  }
+
+  if (status.includes("delay")) {
+    return {
+      className: "delayed",
+      label: "En retard"
+    };
+  }
+
+  return {
+    className: "on-time",
+    label: "À l'heure"
+  };
+}
+
+async function loadFlights() {
   const input = document.getElementById("airportInput");
   const results = document.getElementById("results");
-
   const airport = getAirportCode(input.value);
 
   if (!airport) {
-
-    results.innerHTML = `
-      <div class="empty">
-        Entre une ville ou un code IATA.
-      </div>
-    `;
-
+    results.innerHTML = `<div class="empty">Entre une ville ou un code IATA.</div>`;
     return;
   }
 
+  input.value = airport;
+
   results.innerHTML = `
     <div class="loading-card">
-      Chargement des vols pour ${airport}...
+      <div class="loader"></div>
+      <p>Chargement des vols pour ${airport}...</p>
     </div>
   `;
 
   try {
-
-    const response = await fetch(
-      `https://flight-arrivals-app-good.onrender.com/api/arrivals/${airport}`
-    );
+    const response = await fetch(`${API_BASE_URL}/api/arrivals/${airport}`);
 
     if (!response.ok) {
-
       const text = await response.text();
-
       throw new Error(`API ${response.status} - ${text}`);
     }
 
     const flights = await response.json();
 
     if (!Array.isArray(flights) || flights.length === 0) {
-
-      results.innerHTML = `
-        <div class="empty">
-          Aucun vol trouvé pour ${airport}.
-        </div>
-      `;
-
+      results.innerHTML = `<div class="empty">Aucun vol trouvé pour ${airport}.</div>`;
       return;
     }
 
     results.innerHTML = flights.map(f => {
-
-      const status = String(f.status || "").toLowerCase();
-
-      const delayed = status.includes("delay");
-      const cancelled = status.includes("cancel");
-
-      let cardClass = "flight-card";
-      let badge = "À l'heure";
-
-      if (delayed) {
-        cardClass += " delayed";
-        badge = "En retard";
-      }
-
-      if (cancelled) {
-        cardClass += " cancelled";
-        badge = "Annulé";
-      }
+      const statusData = getStatusData(f.status);
 
       const flightId = String(f.flightNumber || "")
         .toLowerCase()
         .replace(/\s/g, "");
 
-      return `
-        <article class="${cardClass}">
+      const remainingText =
+        f.minutesToArrival !== null
+          ? `Arrive dans ${f.minutesToArrival} min`
+          : "N/A";
 
+      return `
+        <article class="flight-card ${statusData.className}">
           <div class="flight-content">
 
             <div class="flight-top">
-
               <div>
                 <span class="flight-label">Vol</span>
                 <h3>${f.flightNumber}</h3>
               </div>
 
-              <div class="badge">
-                ${badge}
-              </div>
-
+              <div class="badge">${statusData.label}</div>
             </div>
 
             <div class="route">
-
               <div>
                 <span>Départ</span>
                 <strong>${f.from}</strong>
@@ -165,11 +153,9 @@ async function loadFlights() {
                 <span>Arrivée</span>
                 <strong>${f.to}</strong>
               </div>
-
             </div>
 
             <div class="info-grid">
-
               <div class="info">
                 <span>Compagnie</span>
                 <strong>${f.airline}</strong>
@@ -182,38 +168,21 @@ async function loadFlights() {
 
               <div class="info highlight">
                 <span>Temps restant</span>
-
-                <strong>
-                  ${
-                    f.minutesToArrival !== null
-                      ? `Arrive dans ${f.minutesToArrival} min`
-                      : "N/A"
-                  }
-                </strong>
+                <strong>${remainingText}</strong>
               </div>
-
             </div>
 
             <div class="bottom-row">
-
               <div class="time-row">
-
                 <div class="time-box">
                   <span>Heure prévue</span>
-
-                  <strong>
-                    ${formatDate(f.scheduledTime)}
-                  </strong>
+                  <strong>${formatDate(f.scheduledTime)}</strong>
                 </div>
 
                 <div class="time-box">
                   <span>Heure estimée</span>
-
-                  <strong>
-                    ${formatDate(f.estimatedTime || f.actualTime)}
-                  </strong>
+                  <strong>${formatDate(f.estimatedTime || f.actualTime)}</strong>
                 </div>
-
               </div>
 
               <a
@@ -223,18 +192,14 @@ async function loadFlights() {
               >
                 Suivre ce vol
               </a>
-
             </div>
 
           </div>
-
         </article>
       `;
-
     }).join("");
 
   } catch (err) {
-
     console.error(err);
 
     results.innerHTML = `
@@ -247,13 +212,10 @@ async function loadFlights() {
   }
 }
 
-document
-  .getElementById("airportInput")
-  .addEventListener("keydown", e => {
-
-    if (e.key === "Enter") {
-      loadFlights();
-    }
-  });
+document.getElementById("airportInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    loadFlights();
+  }
+});
 
 loadFlights();
