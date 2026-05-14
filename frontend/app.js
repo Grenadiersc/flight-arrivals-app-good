@@ -161,30 +161,39 @@ function getAirlineInitials(name) {
 function getAirlineLogo(airlineName) {
   const name = String(airlineName || "").toLowerCase();
 
-  const logos = {
-    "air france": "https://logo.clearbit.com/airfrance.com",
-    "ryanair": "https://logo.clearbit.com/ryanair.com",
-    "easyjet": "https://logo.clearbit.com/easyjet.com",
-    "klm": "https://logo.clearbit.com/klm.com",
-    "british": "https://logo.clearbit.com/britishairways.com",
-    "british airways": "https://logo.clearbit.com/britishairways.com",
-    "lufthansa": "https://logo.clearbit.com/lufthansa.com",
-    "transavia": "https://logo.clearbit.com/transavia.com",
-    "iberia": "https://logo.clearbit.com/iberia.com",
-    "emirates": "https://logo.clearbit.com/emirates.com",
-    "qatar": "https://logo.clearbit.com/qatarairways.com",
-    "turkish": "https://logo.clearbit.com/turkishairlines.com",
-    "vueling": "https://logo.clearbit.com/vueling.com",
-    "volotea": "https://logo.clearbit.com/volotea.com",
-    "ita": "https://logo.clearbit.com/ita-airways.com",
-    "brussels": "https://logo.clearbit.com/brusselsairlines.com"
+  const domains = {
+    "air france": "airfrance.com",
+    "ryanair": "ryanair.com",
+    "easyjet": "easyjet.com",
+    "easyjet europe": "easyjet.com",
+    "klm": "klm.com",
+    "british": "britishairways.com",
+    "british airways": "britishairways.com",
+    "lufthansa": "lufthansa.com",
+    "transavia": "transavia.com",
+    "iberia": "iberia.com",
+    "emirates": "emirates.com",
+    "qatar": "qatarairways.com",
+    "turkish": "turkishairlines.com",
+    "vueling": "vueling.com",
+    "volotea": "volotea.com",
+    "ita": "ita-airways.com",
+    "brussels": "brusselsairlines.com",
+    "brussels airlines": "brusselsairlines.com",
+    "austrian": "austrian.com",
+    "swiss": "swiss.com",
+    "tap": "flytap.com",
+    "delta": "delta.com",
+    "american": "aa.com",
+    "united": "united.com"
   };
 
-  const match = Object.keys(logos).find(key => name.includes(key));
+  const match = Object.keys(domains).find(key => name.includes(key));
 
-  return match ? logos[match] : null;
+  if (!match) return null;
+
+  return `https://www.google.com/s2/favicons?sz=128&domain=${domains[match]}`;
 }
-
 function getTimeDetail(minutes, direction) {
   if (minutes === null || minutes === undefined) {
     return "Horaire indisponible";

@@ -1024,3 +1024,15 @@ body {
   height: 70%;
   object-fit: contain;
 }
+
+.airline-logo {
+  background: white;
+  border: 1px solid #dbeafe;
+}
+
+.airline-logo img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  display: block;
+}
