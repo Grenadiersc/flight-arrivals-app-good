@@ -670,7 +670,22 @@ function toggleTheme() {
     isDark ? "dark" : "light"
   );
 }
+async function checkQuota() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/quota`);
+    const quota = await response.json();
 
+    alert(
+      `Quota API estimé\n\n` +
+      `Utilisées : ${quota.used}\n` +
+      `Restantes : ${quota.remaining}\n` +
+      `Limite : ${quota.limit}\n` +
+      `Cache : ${quota.cacheDurationHours}h\n\n` +
+      `${quota.note}`
+    );
+  } catch (err) {
+    alert("Impossible de récupérer le quota.");
+  }
+}
 applySavedTheme();
 loadPreferences();
-startAutoRefresh();

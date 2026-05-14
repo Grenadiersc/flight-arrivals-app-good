@@ -12,8 +12,9 @@ const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.AVIATIONSTACK_API_KEY;
 
 const cache = {};
-
-const CACHE_DURATION = 1000 * 60 * 30;
+let monthlyApiCalls = 0;
+const MONTHLY_LIMIT = 100;
+const CACHE_DURATION = 1000 * 60 * 60 * 12;
 
 function getCacheKey(iata, direction) {
   return `${iata}_${direction}`;
@@ -61,7 +62,7 @@ app.get("/api/flights/:iata/:direction", async (req, res) => {
       direction === "departures"
         ? "departure"
         : "arrival";
-
+monthlyApiCalls++;
     const response = await axios.get(
       "http://api.aviationstack.com/v1/flights",
       {
@@ -139,7 +140,15 @@ app.get("/api/flights/:iata/:direction", async (req, res) => {
     });
   }
 });
-
+app.get("/api/quota", (req, res) => {
+  res.json({
+    used: monthlyApiCalls,
+    remaining: Math.max(MONTHLY_LIMIT - monthlyApiCalls, 0),
+    limit: MONTHLY_LIMIT,
+    cacheDurationHours: 12,
+    note: "Compteur approximatif. Le vrai quota officiel est visible sur AviationStack."
+  });
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
