@@ -4,61 +4,127 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flight Board - Scott Claessens</title>
-  <link rel="stylesheet" href="style.css?v=phase2">
+
+  <link rel="stylesheet" href="style.css?v=phase3">
 </head>
+
 <body>
 
 <div class="layout">
 
   <aside class="sidebar">
-    <div class="brand">
-      <div class="logo">✈</div>
-      <div>
-        <h1>Site de Scott Claessens</h1>
-        <p>Flight Board • Live arrivals</p>
+
+    <div class="sidebar-top">
+
+      <div class="brand">
+        <div class="logo">✈</div>
+
+        <div>
+          <h1>Site de Scott Claessens</h1>
+          <p>Flight Board • Live arrivals</p>
+        </div>
       </div>
+
+      <div class="sidebar-card">
+        <h3>Heure locale</h3>
+
+        <div id="clock" class="clock">
+          --:--:--
+        </div>
+
+        <div id="date" class="date">
+          ---
+        </div>
+      </div>
+
     </div>
 
-    <div class="sidebar-card">
-      <h3>Heure locale</h3>
-      <div id="clock" class="clock">--:--:--</div>
-      <div id="date" class="date">---</div>
-    </div>
+    <div class="sidebar-card iata-card">
 
-    <div class="sidebar-card">
       <h3>Codes IATA principaux</h3>
 
-      <div class="iata-row"><span>TLS</span><p>Toulouse</p></div>
-      <div class="iata-row"><span>CDG</span><p>Paris CDG</p></div>
-      <div class="iata-row"><span>ORY</span><p>Paris Orly</p></div>
-      <div class="iata-row"><span>NCE</span><p>Nice</p></div>
-      <div class="iata-row"><span>MRS</span><p>Marseille</p></div>
-      <div class="iata-row"><span>LYS</span><p>Lyon</p></div>
-      <div class="iata-row"><span>LHR</span><p>Londres Heathrow</p></div>
-      <div class="iata-row"><span>LTN</span><p>Londres Luton</p></div>
+      <div class="iata-row">
+        <span>TLS</span>
+        <p>Toulouse</p>
+      </div>
+
+      <div class="iata-row">
+        <span>CDG</span>
+        <p>Paris CDG</p>
+      </div>
+
+      <div class="iata-row">
+        <span>ORY</span>
+        <p>Paris Orly</p>
+      </div>
+
+      <div class="iata-row">
+        <span>NCE</span>
+        <p>Nice</p>
+      </div>
+
+      <div class="iata-row">
+        <span>MRS</span>
+        <p>Marseille</p>
+      </div>
+
+      <div class="iata-row">
+        <span>LYS</span>
+        <p>Lyon</p>
+      </div>
+
+      <div class="iata-row">
+        <span>LHR</span>
+        <p>Londres Heathrow</p>
+      </div>
+
+      <div class="iata-row">
+        <span>LTN</span>
+        <p>Londres Luton</p>
+      </div>
+
     </div>
+
   </aside>
 
   <main class="main">
 
     <section class="hero">
+
       <div>
-        <p class="eyebrow">Aéroport sélectionné</p>
-        <h2>Arrivées des avions</h2>
+        <p class="eyebrow">
+          Aéroport sélectionné
+        </p>
+
+        <h2>
+          Arrivées des avions
+        </h2>
       </div>
 
       <div class="search">
-        <input id="airportInput" value="TLS" placeholder="TLS, CDG, Nice...">
-        <button onclick="loadFlights()">Rechercher</button>
+
+        <input
+          id="airportInput"
+          value="TLS"
+          placeholder="TLS, CDG, Nice..."
+        >
+
+        <button onclick="loadFlights()">
+          Rechercher
+        </button>
+
       </div>
+
     </section>
 
-    <section id="results" class="results"></section>
+    <section id="results" class="results">
+    </section>
 
   </main>
 
 </div>
 
-<script src="app.js?v=phase2"></script>
+<script src="app.js?v=phase3"></script>
+
 </body>
 </html>

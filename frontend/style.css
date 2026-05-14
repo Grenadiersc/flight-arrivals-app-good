@@ -683,3 +683,36 @@ body {
     margin-bottom: 18px;
   }
 }
+
+@media (max-width: 700px) {
+
+  .layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main {
+    order: 2;
+  }
+
+  .sidebar {
+    order: 1;
+  }
+
+  .sidebar-card:last-child {
+    order: 3;
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 700px) {
+
+  .iata-card {
+    order: 99;
+  }
+}
