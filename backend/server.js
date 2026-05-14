@@ -1,123 +1,145 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
+require("dotenv").config();
 
 const app = express();
+
 app.use(cors());
 
-const API_KEY = process.env.AERODATABOX_API_KEY;
+const PORT = process.env.PORT || 3000;
 
-function getTime(obj) {
-  return (
-    obj?.revisedTime?.local ||
-    obj?.predictedTime?.local ||
-    obj?.actualTime?.local ||
-    obj?.scheduledTime?.local ||
-    null
-  );
+const API_KEY = process.env.AVIATIONSTACK_API_KEY;
+
+const cache = {};
+
+const CACHE_DURATION = 1000 * 60 * 30;
+
+function getCacheKey(iata, direction) {
+  return `${iata}_${direction}`;
+}
+
+function getStatus(scheduled, estimated) {
+  if (!scheduled || !estimated) {
+    return "Unknown";
+  }
+
+  const scheduledDate = new Date(scheduled);
+  const estimatedDate = new Date(estimated);
+
+  const diffMinutes =
+    (estimatedDate - scheduledDate) / 60000;
+
+  if (diffMinutes >= 5) {
+    return "Delayed";
+  }
+
+  if (diffMinutes <= -5) {
+    return "Early";
+  }
+
+  return "On Time";
 }
 
 app.get("/api/flights/:iata/:direction", async (req, res) => {
-  const iata = req.params.iata.toUpperCase();
-  const direction =
-    req.params.direction === "departures" ? "Departure" : "Arrival";
-
-  const now = new Date();
-  const from = now;
-  const to = new Date(now.getTime() + 10 * 60 * 60 * 1000);
-
-  const format = d => d.toISOString().slice(0, 16);
-
-  const url =
-    `https://aerodatabox.p.rapidapi.com/flights/airports/iata/${iata}/${format(from)}/${format(to)}` +
-    `?direction=${direction}&withCancelled=true&withCodeshared=true&withCargo=false&withPrivate=false`;
-
   try {
-    const response = await fetch(url, {
-      headers: {
-        "X-RapidAPI-Key": API_KEY,
-        "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com"
-      }
-    });
+    const iata = req.params.iata.toUpperCase();
+    const direction = req.params.direction;
 
-    const data = await response.json();
+    const cacheKey = getCacheKey(iata, direction);
 
-    if (!response.ok) {
-      return res.status(response.status).json(data);
+    if (
+      cache[cacheKey] &&
+      Date.now() - cache[cacheKey].timestamp < CACHE_DURATION
+    ) {
+      console.log("Serving from cache:", cacheKey);
+
+      return res.json(cache[cacheKey].data);
     }
 
-    const list = direction === "Arrival" ? data.arrivals || [] : data.departures || [];
+    const type =
+      direction === "departures"
+        ? "departure"
+        : "arrival";
 
-    const result = list
-      .map(flight => {
-        const movement = flight.movement || {};
-        const airport = movement.airport || {};
+    const response = await axios.get(
+      "http://api.aviationstack.com/v1/flights",
+      {
+        params: {
+          access_key: API_KEY,
+          limit: 20,
+          [`${type}_iata`]: iata
+        }
+      }
+    );
 
-        const scheduledTime = movement.scheduledTime?.local || null;
-        const estimatedTime = getTime(movement);
-        const actualTime = movement.runwayTime?.local || movement.actualTime?.local || null;
-        const bestTime = actualTime || estimatedTime || scheduledTime;
+    const flights = (response.data.data || []).map(flight => {
+      const scheduledTime =
+        type === "arrival"
+          ? flight.arrival?.scheduled
+          : flight.departure?.scheduled;
 
-        const minutesToFlight = bestTime
-          ? Math.round((new Date(bestTime) - new Date()) / 60000)
-          : null;
+      const estimatedTime =
+        type === "arrival"
+          ? flight.arrival?.estimated
+          : flight.departure?.estimated;
 
-        let statusText = flight.status || "Unknown";
+      const airport =
+        type === "arrival"
+          ? flight.departure?.airport
+          : flight.arrival?.airport;
 
-        if (scheduledTime && estimatedTime) {
-  const scheduled = new Date(scheduledTime);
-  const estimated = new Date(estimatedTime);
+      return {
+        flightNumber:
+          flight.flight?.iata || "Unknown",
 
-  const diffMinutes = Math.round((estimated - scheduled) / 60000);
+        airline:
+          flight.airline?.name || "Unknown",
 
-  if (diffMinutes >= 5) {
-    statusText = "Delayed";
-  } else if (diffMinutes <= -5) {
-    statusText = "Early";
-  }
-}
+        airport:
+          airport || "Unknown",
 
-        return {
-          flightNumber: flight.number || flight.callsign || "N/A",
-          callsign: flight.callsign || "",
-          airline: flight.airline?.name || flight.callsign || "Unknown",
-          airport: airport.name || airport.iata || "Unknown",
-          selectedAirport: iata,
-          direction: req.params.direction,
-          status: statusText,
+        scheduledTime,
+
+        estimatedTime,
+
+        actualTime:
+          type === "arrival"
+            ? flight.arrival?.actual
+            : flight.departure?.actual,
+
+        status: getStatus(
           scheduledTime,
-          estimatedTime,
-          actualTime,
-          minutesToFlight
-        };
-      })
-      .filter(flight => flight.minutesToFlight === null || flight.minutesToFlight >= 0)
-      .sort((a, b) => {
-        if (a.minutesToFlight === null) return 1;
-        if (b.minutesToFlight === null) return -1;
-        return a.minutesToFlight - b.minutesToFlight;
-      });
+          estimatedTime
+        ),
 
-    res.json(result);
+        minutesToFlight: scheduledTime
+          ? Math.round(
+              (new Date(scheduledTime) - new Date()) /
+              60000
+            )
+          : null,
+
+        selectedAirport: iata
+      };
+    });
+
+    cache[cacheKey] = {
+      timestamp: Date.now(),
+      data: flights
+    };
+
+    res.json(flights);
+
   } catch (err) {
+    console.error(err.response?.data || err.message);
+
     res.status(500).json({
-      error: "Server error",
-      details: err.message
+      error: "Erreur récupération vols"
     });
   }
 });
 
-app.get("/api/arrivals/:iata", async (req, res) => {
-  req.params.direction = "arrivals";
-  app._router.handle(req, res);
-});
-
-app.get("/", (req, res) => {
-  res.send("Flight Board API running");
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Backend running");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
