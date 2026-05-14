@@ -1169,3 +1169,29 @@ body.dark-mode .flight-link,
 body.dark-mode .search button {
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
 }
+
+.flight-card {
+  padding: 22px;
+}
+
+.flight-content {
+  padding: 0;
+}
+
+.flight-top {
+  margin-bottom: 22px;
+}
+
+.airline-logo {
+  margin-right: 4px;
+}
+
+.route {
+  margin-bottom: 22px;
+}
+
+@media (max-width: 700px) {
+  .flight-card {
+    padding: 18px;
+  }
+}
