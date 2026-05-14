@@ -558,10 +558,17 @@ async function loadFlights(isAutoRefresh = false) {
               <button
                 class="detail-btn"
                 onclick='openFlightDetails(${JSON.stringify({
-                  flightNumber: f.flightNumber,
-                  airline: f.airline,
-                  status: f.status
-                })})'
+  flightNumber: f.flightNumber,
+  airline: f.airline,
+  status: f.status,
+  scheduledTime: f.scheduledTime,
+  estimatedTime: f.estimatedTime,
+  actualTime: f.actualTime,
+  airport: f.airport,
+  selectedAirport: f.selectedAirport,
+  direction: currentDirection,
+  minutesToFlight: f.minutesToFlight
+})})'
               >
                 Détails
               </button>
