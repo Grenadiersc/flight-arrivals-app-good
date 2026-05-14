@@ -1,33 +1,45 @@
 const API_BASE_URL = "https://flight-arrivals-app-good.onrender.com";
 
-let currentDirection = "arrivals";
+let currentDirection = localStorage.getItem("lastDirection") || "arrivals";
+let autoRefreshInterval = null;
+let lastAirport = localStorage.getItem("lastAirport") || "";
 
-const AIRPORT_MAP = {
-  toulouse: "TLS",
-  nice: "NCE",
-  paris: "CDG",
-  orly: "ORY",
-  marseille: "MRS",
-  lyon: "LYS",
-  londres: "LHR",
-  london: "LHR",
-  luton: "LTN",
-  dubai: "DXB",
-  tokyo: "HND",
-  singapour: "SIN",
-  singapore: "SIN"
-};
+const AIRPORTS = [
+  { code: "TLS", name: "Toulouse", keywords: ["toulouse", "blagnac"] },
+  { code: "CDG", name: "Paris Charles de Gaulle", keywords: ["paris", "charles de gaulle", "cdg"] },
+  { code: "ORY", name: "Paris Orly", keywords: ["paris", "orly"] },
+  { code: "NCE", name: "Nice", keywords: ["nice", "cote d azur", "côte d'azur"] },
+  { code: "MRS", name: "Marseille", keywords: ["marseille", "provence"] },
+  { code: "LYS", name: "Lyon", keywords: ["lyon", "saint exupery", "saint-exupéry"] },
+  { code: "LHR", name: "Londres Heathrow", keywords: ["londres", "london", "heathrow"] },
+  { code: "LTN", name: "Londres Luton", keywords: ["londres", "london", "luton"] },
+  { code: "LGW", name: "Londres Gatwick", keywords: ["londres", "london", "gatwick"] },
+  { code: "STN", name: "Londres Stansted", keywords: ["londres", "london", "stansted"] },
+  { code: "AMS", name: "Amsterdam Schiphol", keywords: ["amsterdam", "schiphol"] },
+  { code: "MAD", name: "Madrid", keywords: ["madrid", "barajas"] },
+  { code: "BCN", name: "Barcelone", keywords: ["barcelone", "barcelona"] },
+  { code: "FCO", name: "Rome Fiumicino", keywords: ["rome", "fiumicino"] },
+  { code: "FRA", name: "Francfort", keywords: ["francfort", "frankfurt"] },
+  { code: "MUC", name: "Munich", keywords: ["munich", "münchen"] },
+  { code: "DUB", name: "Dublin", keywords: ["dublin"] },
+  { code: "JFK", name: "New York JFK", keywords: ["new york", "jfk"] },
+  { code: "LAX", name: "Los Angeles", keywords: ["los angeles", "lax"] },
+  { code: "DXB", name: "Dubai", keywords: ["dubai", "dubaï"] },
+  { code: "HND", name: "Tokyo Haneda", keywords: ["tokyo", "haneda"] },
+  { code: "SIN", name: "Singapour", keywords: ["singapour", "singapore", "changi"] }
+];
 
-const AIRPORT_NAMES = {
-  TLS: "Toulouse",
-  CDG: "Paris CDG",
-  ORY: "Paris Orly",
-  NCE: "Nice",
-  MRS: "Marseille",
-  LYS: "Lyon",
-  LHR: "Londres Heathrow",
-  LTN: "Londres Luton"
-};
+const AIRPORT_NAMES = Object.fromEntries(
+  AIRPORTS.map(airport => [airport.code, airport.name])
+);
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 function updateClock() {
   const now = new Date();
@@ -53,6 +65,7 @@ updateClock();
 
 function setDirection(direction) {
   currentDirection = direction;
+  localStorage.setItem("lastDirection", direction);
 
   document
     .getElementById("arrivalsBtn")
@@ -70,13 +83,24 @@ function setDirection(direction) {
 }
 
 function getAirportCode(value) {
-  const text = value.trim().toLowerCase();
+  const cleanValue = normalizeText(value);
 
-  if (text.length === 3) {
-    return text.toUpperCase();
+  if (cleanValue.length === 3) {
+    return cleanValue.toUpperCase();
   }
 
-  return AIRPORT_MAP[text] || text.toUpperCase();
+  const found = AIRPORTS.find(airport => {
+    const code = normalizeText(airport.code);
+    const name = normalizeText(airport.name);
+
+    return (
+      code === cleanValue ||
+      name.includes(cleanValue) ||
+      airport.keywords.some(keyword => normalizeText(keyword).includes(cleanValue))
+    );
+  });
+
+  return found ? found.code : cleanValue.toUpperCase();
 }
 
 function getAirportDisplay(code) {
@@ -115,6 +139,107 @@ function getStatusData(statusText) {
     className: "on-time",
     label: "À l'heure"
   };
+}
+
+function showSuggestions() {
+  const input = document.getElementById("airportInput");
+  const suggestions = document.getElementById("suggestions");
+  const query = normalizeText(input.value);
+
+  if (!query) {
+    suggestions.innerHTML = "";
+    suggestions.style.display = "none";
+    return;
+  }
+
+  const matches = AIRPORTS.filter(airport => {
+    const code = normalizeText(airport.code);
+    const name = normalizeText(airport.name);
+
+    return (
+      code.includes(query) ||
+      name.includes(query) ||
+      airport.keywords.some(keyword => normalizeText(keyword).includes(query))
+    );
+  }).slice(0, 6);
+
+  if (matches.length === 0) {
+    suggestions.innerHTML = "";
+    suggestions.style.display = "none";
+    return;
+  }
+
+  suggestions.innerHTML = matches.map(airport => `
+    <div class="suggestion-item" onclick="selectSuggestion('${airport.code}')">
+      <strong>${airport.code}</strong>
+      <span>${airport.name}</span>
+    </div>
+  `).join("");
+
+  suggestions.style.display = "block";
+}
+
+function selectSuggestion(code) {
+  document.getElementById("airportInput").value = code;
+  document.getElementById("suggestions").innerHTML = "";
+  document.getElementById("suggestions").style.display = "none";
+  loadFlights();
+}
+
+function quickSearch(code) {
+  document.getElementById("airportInput").value = code;
+  loadFlights();
+}
+
+function savePreferences(airport) {
+  localStorage.setItem("lastAirport", airport);
+  localStorage.setItem("lastDirection", currentDirection);
+  lastAirport = airport;
+}
+
+function loadPreferences() {
+  const input = document.getElementById("airportInput");
+
+  if (lastAirport) {
+    input.value = lastAirport;
+  }
+
+  setDirection(currentDirection);
+
+  if (lastAirport) {
+    loadFlights();
+  } else {
+    document.getElementById("results").innerHTML = `
+      <div class="empty">
+        Entrez un aéroport ou cliquez sur un code IATA pour afficher les vols.
+      </div>
+    `;
+  }
+}
+
+function updateLastRefresh() {
+  const now = new Date();
+
+  document.getElementById("lastRefresh").textContent =
+    `Dernière mise à jour : ${now.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })}`;
+}
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+
+  autoRefreshInterval = setInterval(() => {
+    const input = document.getElementById("airportInput");
+
+    if (input.value.trim() !== "") {
+      loadFlights(true);
+    }
+  }, 60000);
 }
 
 function renderSummary(flights, airport) {
@@ -164,7 +289,7 @@ function renderSummary(flights, airport) {
   `;
 }
 
-async function loadFlights() {
+async function loadFlights(isAutoRefresh = false) {
   const input = document.getElementById("airportInput");
   const results = document.getElementById("results");
   const summary = document.getElementById("summary");
@@ -184,13 +309,16 @@ async function loadFlights() {
 
   input.value = airport;
   savePreferences(airport);
-  summary.innerHTML = "";
 
-  results.innerHTML = `
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-  `;
+  if (!isAutoRefresh) {
+    summary.innerHTML = "";
+
+    results.innerHTML = `
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    `;
+  }
 
   try {
     const response = await fetch(
@@ -210,10 +338,13 @@ async function loadFlights() {
           Aucun vol trouvé pour ${getAirportDisplay(airport)}.
         </div>
       `;
+      summary.innerHTML = "";
+      updateLastRefresh();
       return;
     }
 
     renderSummary(flights, airport);
+    updateLastRefresh();
 
     results.innerHTML = flights
       .map(f => {
@@ -348,51 +479,16 @@ async function loadFlights() {
 
 document.getElementById("airportInput").addEventListener("keydown", e => {
   if (e.key === "Enter") {
+    document.getElementById("suggestions").style.display = "none";
     loadFlights();
   }
 });
 
+document.addEventListener("click", e => {
+  if (!e.target.closest(".search-wrapper")) {
+    document.getElementById("suggestions").style.display = "none";
+  }
+});
+
 loadPreferences();
-
-if (!localStorage.getItem("lastAirport")) {
-  document.getElementById("results").innerHTML = `
-    <div class="empty">
-      Entrez un aéroport ou cliquez sur un code IATA pour afficher les vols.
-    </div>
-  `;
-}
-
-function savePreferences(airport) {
-  localStorage.setItem("lastAirport", airport);
-  localStorage.setItem("lastDirection", currentDirection);
-}
-
-function loadPreferences() {
-  const savedAirport = localStorage.getItem("lastAirport");
-  const savedDirection = localStorage.getItem("lastDirection");
-
-  if (savedDirection === "departures" || savedDirection === "arrivals") {
-    currentDirection = savedDirection;
-  }
-
-  if (savedAirport) {
-    document.getElementById("airportInput").value = savedAirport;
-  }
-
-  document
-    .getElementById("arrivalsBtn")
-    .classList.toggle("active", currentDirection === "arrivals");
-
-  document
-    .getElementById("departuresBtn")
-    .classList.toggle("active", currentDirection === "departures");
-
-  if (savedAirport) {
-    loadFlights();
-  }
-}
-
-function quickSearch(code) {
-  document.getElementById("airportInput").value = code;
-  loadFlights();
-}
+startAutoRefresh();
