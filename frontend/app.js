@@ -1,5 +1,7 @@
 const API_BASE_URL = "https://flight-arrivals-app-good.onrender.com";
 
+let currentDirection = "arrivals";
+
 const AIRPORT_MAP = {
   toulouse: "TLS",
   nice: "NCE",
@@ -38,6 +40,15 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+function setDirection(direction) {
+  currentDirection = direction;
+
+  document.getElementById("arrivalsBtn").classList.toggle("active", direction === "arrivals");
+  document.getElementById("departuresBtn").classList.toggle("active", direction === "departures");
+
+  loadFlights();
+}
+
 function getAirportCode(value) {
   const text = value.trim().toLowerCase();
 
@@ -63,46 +74,76 @@ function getStatusData(statusText) {
   const status = String(statusText || "").toLowerCase();
 
   if (status.includes("cancel")) {
-    return {
-      className: "cancelled",
-      label: "Annulé"
-    };
+    return { className: "cancelled", label: "Annulé" };
   }
 
   if (status.includes("delay")) {
-    return {
-      className: "delayed",
-      label: "En retard"
-    };
+    return { className: "delayed", label: "En retard" };
   }
 
-  return {
-    className: "on-time",
-    label: "À l'heure"
-  };
+  return { className: "on-time", label: "À l'heure" };
+}
+
+function renderSummary(flights, airport) {
+  const summary = document.getElementById("summary");
+
+  const delayedCount = flights.filter(f =>
+    String(f.status || "").toLowerCase().includes("delay")
+  ).length;
+
+  const nextFlight = flights[0];
+
+  const directionLabel = currentDirection === "arrivals" ? "arrivées" : "départs";
+
+  summary.innerHTML = `
+    <div class="summary-card">
+      <span>Vols ${directionLabel}</span>
+      <strong>${flights.length}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Prochain vol</span>
+      <strong>${nextFlight ? nextFlight.flightNumber : "N/A"}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Retards</span>
+      <strong>${delayedCount}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Aéroport</span>
+      <strong>${airport}</strong>
+    </div>
+  `;
 }
 
 async function loadFlights() {
   const input = document.getElementById("airportInput");
   const results = document.getElementById("results");
+  const summary = document.getElementById("summary");
+
   const airport = getAirportCode(input.value);
 
   if (!airport) {
     results.innerHTML = `<div class="empty">Entre une ville ou un code IATA.</div>`;
+    summary.innerHTML = "";
     return;
   }
 
   input.value = airport;
 
+  summary.innerHTML = "";
+
   results.innerHTML = `
     <div class="loading-card">
       <div class="loader"></div>
-      <p>Chargement des vols pour ${airport}...</p>
+      <p>Chargement des ${currentDirection === "arrivals" ? "arrivées" : "départs"} pour ${airport}...</p>
     </div>
   `;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/arrivals/${airport}`);
+    const response = await fetch(`${API_BASE_URL}/api/flights/${airport}/${currentDirection}`);
 
     if (!response.ok) {
       const text = await response.text();
@@ -116,6 +157,8 @@ async function loadFlights() {
       return;
     }
 
+    renderSummary(flights, airport);
+
     results.innerHTML = flights.map(f => {
       const statusData = getStatusData(f.status);
 
@@ -123,9 +166,14 @@ async function loadFlights() {
         .toLowerCase()
         .replace(/\s/g, "");
 
+      const airportLabel = currentDirection === "arrivals" ? "Départ" : "Destination";
+      const selectedLabel = currentDirection === "arrivals" ? "Arrivée" : "Départ";
+
       const remainingText =
-        f.minutesToArrival !== null
-          ? `Arrive dans ${f.minutesToArrival} min`
+        f.minutesToFlight !== null
+          ? currentDirection === "arrivals"
+            ? `Arrive dans ${f.minutesToFlight} min`
+            : `Départ dans ${f.minutesToFlight} min`
           : "N/A";
 
       return `
@@ -143,15 +191,15 @@ async function loadFlights() {
 
             <div class="route">
               <div>
-                <span>Départ</span>
-                <strong>${f.from}</strong>
+                <span>${airportLabel}</span>
+                <strong>${f.airport}</strong>
               </div>
 
               <div class="arrow">✈</div>
 
               <div>
-                <span>Arrivée</span>
-                <strong>${f.to}</strong>
+                <span>${selectedLabel}</span>
+                <strong>${f.selectedAirport}</strong>
               </div>
             </div>
 

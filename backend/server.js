@@ -9,15 +9,6 @@ app.use(cors());
 
 const API_KEY = process.env.AERODATABOX_API_KEY;
 
-let airportCache = null;
-
-function normalizeText(text) {
-  return String(text || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
 function getTime(obj) {
   return (
     obj?.revisedTime?.local ||
@@ -28,93 +19,10 @@ function getTime(obj) {
   );
 }
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = "";
-  let insideQuotes = false;
-
-  for (const char of line) {
-    if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      result.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  result.push(current);
-  return result;
-}
-
-async function getAirports() {
-  if (airportCache) return airportCache;
-
-  const response = await fetch(
-    "https://davidmegginson.github.io/ourairports-data/airports.csv"
-  );
-
-  const csv = await response.text();
-
-  airportCache = csv
-    .split("\n")
-    .slice(1)
-    .map(line => parseCSVLine(line))
-    .filter(cols => cols[13] && cols[13].length === 3)
-    .map(cols => ({
-      code: cols[13],
-      name: cols[3],
-      municipality: cols[10],
-      country: cols[8]
-    }));
-
-  return airportCache;
-}
-
-app.get("/api/airports", async (req, res) => {
-  try {
-    const q = normalizeText(req.query.q || "");
-
-    if (!q) {
-      return res.json([]);
-    }
-
-    const airports = await getAirports();
-
-    const scored = airports
-      .map(a => {
-        const code = normalizeText(a.code);
-        const name = normalizeText(a.name);
-        const city = normalizeText(a.municipality);
-        const country = normalizeText(a.country);
-
-        let score = 0;
-
-        if (code === q) score += 100;
-        if (city === q) score += 90;
-        if (name.includes(q)) score += 50;
-        if (city.startsWith(q)) score += 45;
-        if (city.includes(q)) score += 35;
-        if (country.includes(q)) score += 10;
-
-        return { ...a, score };
-      })
-      .filter(a => a.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 50);
-
-    res.json(scored);
-  } catch (err) {
-    res.status(500).json({
-      error: "Airport search error",
-      details: err.message
-    });
-  }
-});
-
-app.get("/api/arrivals/:iata", async (req, res) => {
+app.get("/api/flights/:iata/:direction", async (req, res) => {
   const iata = req.params.iata.toUpperCase();
+  const direction =
+    req.params.direction === "departures" ? "Departure" : "Arrival";
 
   const now = new Date();
   const from = now;
@@ -124,7 +32,7 @@ app.get("/api/arrivals/:iata", async (req, res) => {
 
   const url =
     `https://aerodatabox.p.rapidapi.com/flights/airports/iata/${iata}/${format(from)}/${format(to)}` +
-    `?direction=Arrival&withCancelled=true&withCodeshared=true&withCargo=false&withPrivate=false`;
+    `?direction=${direction}&withCancelled=true&withCodeshared=true&withCargo=false&withPrivate=false`;
 
   try {
     const response = await fetch(url, {
@@ -140,33 +48,25 @@ app.get("/api/arrivals/:iata", async (req, res) => {
       return res.status(response.status).json(data);
     }
 
-    const arrivals = data.arrivals || [];
+    const list = direction === "Arrival" ? data.arrivals || [] : data.departures || [];
 
-    const result = arrivals
+    const result = list
       .map(flight => {
         const movement = flight.movement || {};
         const airport = movement.airport || {};
 
         const scheduledTime = movement.scheduledTime?.local || null;
         const estimatedTime = getTime(movement);
-        const actualTime =
-          movement.runwayTime?.local ||
-          movement.actualTime?.local ||
-          null;
-
+        const actualTime = movement.runwayTime?.local || movement.actualTime?.local || null;
         const bestTime = actualTime || estimatedTime || scheduledTime;
 
-        const minutesToArrival = bestTime
+        const minutesToFlight = bestTime
           ? Math.round((new Date(bestTime) - new Date()) / 60000)
           : null;
 
         let statusText = flight.status || "Unknown";
 
-        if (
-          scheduledTime &&
-          estimatedTime &&
-          scheduledTime !== estimatedTime
-        ) {
+        if (scheduledTime && estimatedTime && scheduledTime !== estimatedTime) {
           statusText += " (Delayed)";
         }
 
@@ -174,17 +74,21 @@ app.get("/api/arrivals/:iata", async (req, res) => {
           flightNumber: flight.number || flight.callsign || "N/A",
           callsign: flight.callsign || "",
           airline: flight.airline?.name || flight.callsign || "Unknown",
-          from: airport.name || airport.iata || "Unknown",
-          to: iata,
+          airport: airport.name || airport.iata || "Unknown",
+          selectedAirport: iata,
+          direction: req.params.direction,
           status: statusText,
           scheduledTime,
           estimatedTime,
           actualTime,
-          minutesToArrival
+          minutesToFlight
         };
       })
-      .filter(flight => {
-        return flight.minutesToArrival === null || flight.minutesToArrival >= 0;
+      .filter(flight => flight.minutesToFlight === null || flight.minutesToFlight >= 0)
+      .sort((a, b) => {
+        if (a.minutesToFlight === null) return 1;
+        if (b.minutesToFlight === null) return -1;
+        return a.minutesToFlight - b.minutesToFlight;
       });
 
     res.json(result);
@@ -196,6 +100,15 @@ app.get("/api/arrivals/:iata", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("Backend running on http://localhost:3000");
+app.get("/api/arrivals/:iata", async (req, res) => {
+  req.params.direction = "arrivals";
+  app._router.handle(req, res);
+});
+
+app.get("/", (req, res) => {
+  res.send("Flight Board API running");
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Backend running");
 });
