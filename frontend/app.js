@@ -54,8 +54,13 @@ updateClock();
 function setDirection(direction) {
   currentDirection = direction;
 
-  document.getElementById("arrivalsBtn").classList.toggle("active", direction === "arrivals");
-  document.getElementById("departuresBtn").classList.toggle("active", direction === "departures");
+  document
+    .getElementById("arrivalsBtn")
+    .classList.toggle("active", direction === "arrivals");
+
+  document
+    .getElementById("departuresBtn")
+    .classList.toggle("active", direction === "departures");
 
   const input = document.getElementById("airportInput");
 
@@ -93,14 +98,23 @@ function getStatusData(statusText) {
   const status = String(statusText || "").toLowerCase();
 
   if (status.includes("cancel")) {
-    return { className: "cancelled", label: "Annulé" };
+    return {
+      className: "cancelled",
+      label: "Annulé"
+    };
   }
 
   if (status.includes("delay")) {
-    return { className: "delayed", label: "En retard" };
+    return {
+      className: "delayed",
+      label: "En retard"
+    };
   }
 
-  return { className: "on-time", label: "À l'heure" };
+  return {
+    className: "on-time",
+    label: "À l'heure"
+  };
 }
 
 function renderSummary(flights, airport) {
@@ -111,27 +125,41 @@ function renderSummary(flights, airport) {
   ).length;
 
   const nextFlight = flights[0];
-  const directionLabel = currentDirection === "arrivals" ? "arrivées" : "départs";
+
+  const directionLabel =
+    currentDirection === "arrivals" ? "arrivées" : "départs";
 
   summary.innerHTML = `
     <div class="summary-card">
-      <span>Vols ${directionLabel}</span>
-      <strong>${flights.length}</strong>
+      <div class="summary-icon">✈</div>
+      <div>
+        <span>Vols ${directionLabel}</span>
+        <strong>${flights.length}</strong>
+      </div>
     </div>
 
     <div class="summary-card">
-      <span>Prochain vol</span>
-      <strong>${nextFlight ? nextFlight.flightNumber : "N/A"}</strong>
+      <div class="summary-icon green-icon">🛬</div>
+      <div>
+        <span>Prochain vol</span>
+        <strong>${nextFlight ? nextFlight.flightNumber : "N/A"}</strong>
+      </div>
     </div>
 
     <div class="summary-card">
-      <span>Retards</span>
-      <strong>${delayedCount}</strong>
+      <div class="summary-icon red-icon">⏱</div>
+      <div>
+        <span>Retards</span>
+        <strong>${delayedCount}</strong>
+      </div>
     </div>
 
     <div class="summary-card">
-      <span>Aéroport</span>
-      <strong>${getAirportDisplay(airport)}</strong>
+      <div class="summary-icon">📍</div>
+      <div>
+        <span>Aéroport</span>
+        <strong>${getAirportDisplay(airport)}</strong>
+      </div>
     </div>
   `;
 }
@@ -144,7 +172,12 @@ async function loadFlights() {
   const airport = getAirportCode(input.value);
 
   if (!airport) {
-    results.innerHTML = `<div class="empty">Entre une ville ou un code IATA.</div>`;
+    results.innerHTML = `
+      <div class="empty">
+        Entrez une ville ou un code IATA.
+      </div>
+    `;
+
     summary.innerHTML = "";
     return;
   }
@@ -153,14 +186,15 @@ async function loadFlights() {
   summary.innerHTML = "";
 
   results.innerHTML = `
-    <div class="loading-card">
-      <div class="loader"></div>
-      <p>Chargement des ${currentDirection === "arrivals" ? "arrivées" : "départs"} pour ${getAirportDisplay(airport)}...</p>
-    </div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
   `;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/flights/${airport}/${currentDirection}`);
+    const response = await fetch(
+      `${API_BASE_URL}/api/flights/${airport}/${currentDirection}`
+    );
 
     if (!response.ok) {
       const text = await response.text();
@@ -170,113 +204,133 @@ async function loadFlights() {
     const flights = await response.json();
 
     if (!Array.isArray(flights) || flights.length === 0) {
-      results.innerHTML = `<div class="empty">Aucun vol trouvé pour ${getAirportDisplay(airport)}.</div>`;
+      results.innerHTML = `
+        <div class="empty">
+          Aucun vol trouvé pour ${getAirportDisplay(airport)}.
+        </div>
+      `;
       return;
     }
 
     renderSummary(flights, airport);
 
-    results.innerHTML = flights.map(f => {
-      const statusData = getStatusData(f.status);
+    results.innerHTML = flights
+      .map(f => {
+        const statusData = getStatusData(f.status);
 
-      const flightId = String(f.flightNumber || "")
-        .toLowerCase()
-        .replace(/\s/g, "");
+        const flightId = String(f.flightNumber || "")
+          .toLowerCase()
+          .replace(/\s/g, "");
 
-      let leftLabel;
-      let leftValue;
-      let rightLabel;
-      let rightValue;
+        let leftLabel;
+        let leftValue;
+        let rightLabel;
+        let rightValue;
 
-      if (currentDirection === "arrivals") {
-        leftLabel = "Départ de";
-        leftValue = f.airport;
-        rightLabel = "Arrivée à";
-        rightValue = getAirportDisplay(f.selectedAirport);
-      } else {
-        leftLabel = "Départ de";
-        leftValue = getAirportDisplay(f.selectedAirport);
-        rightLabel = "Destination";
-        rightValue = f.airport;
-      }
+        if (currentDirection === "arrivals") {
+          leftLabel = "Départ de";
+          leftValue = f.airport;
+          rightLabel = "Arrivée à";
+          rightValue = getAirportDisplay(f.selectedAirport);
+        } else {
+          leftLabel = "Départ de";
+          leftValue = getAirportDisplay(f.selectedAirport);
+          rightLabel = "Destination";
+          rightValue = f.airport;
+        }
 
-      const remainingText =
-        f.minutesToFlight !== null
-          ? currentDirection === "arrivals"
-            ? `Arrive dans ${f.minutesToFlight} min`
-            : `Départ dans ${f.minutesToFlight} min`
-          : "N/A";
+        const remainingText =
+          f.minutesToFlight !== null
+            ? currentDirection === "arrivals"
+              ? `Arrive dans ${f.minutesToFlight} min`
+              : `Départ dans ${f.minutesToFlight} min`
+            : "N/A";
 
-      return `
-        <article class="flight-card ${statusData.className}">
-          <div class="flight-content">
+        return `
+          <article class="flight-card ${statusData.className}">
 
-            <div class="flight-top">
-              <div>
-                <span class="flight-label">Vol</span>
-                <h3>${f.flightNumber}</h3>
-              </div>
+            <div class="flight-content">
 
-              <div class="badge">${statusData.label}</div>
-            </div>
+              <div class="flight-top">
 
-            <div class="route">
-              <div>
-                <span>${leftLabel}</span>
-                <strong>${leftValue}</strong>
-              </div>
-
-              <div class="arrow">✈</div>
-
-              <div>
-                <span>${rightLabel}</span>
-                <strong>${rightValue}</strong>
-              </div>
-            </div>
-
-            <div class="info-grid">
-              <div class="info">
-                <span>Compagnie</span>
-                <strong>${f.airline}</strong>
-              </div>
-
-              <div class="info">
-                <span>Statut</span>
-                <strong>${f.status}</strong>
-              </div>
-
-              <div class="info highlight">
-                <span>Temps restant</span>
-                <strong>${remainingText}</strong>
-              </div>
-            </div>
-
-            <div class="bottom-row">
-              <div class="time-row">
-                <div class="time-box">
-                  <span>Heure prévue</span>
-                  <strong>${formatDate(f.scheduledTime)}</strong>
+                <div>
+                  <span class="flight-label">Vol</span>
+                  <h3>${f.flightNumber}</h3>
                 </div>
 
-                <div class="time-box">
-                  <span>Heure estimée</span>
-                  <strong>${formatDate(f.estimatedTime || f.actualTime)}</strong>
+                <div class="badge">
+                  ${statusData.label}
                 </div>
+
               </div>
 
-              <a
-                class="flight-link"
-                target="_blank"
-                href="https://www.flightradar24.com/data/flights/${flightId}"
-              >
-                Suivre ce vol
-              </a>
+              <div class="route">
+
+                <div>
+                  <span>${leftLabel}</span>
+                  <strong>${leftValue}</strong>
+                </div>
+
+                <div class="arrow">✈</div>
+
+                <div>
+                  <span>${rightLabel}</span>
+                  <strong>${rightValue}</strong>
+                </div>
+
+              </div>
+
+              <div class="info-grid">
+
+                <div class="info">
+                  <span>Compagnie</span>
+                  <strong>${f.airline}</strong>
+                </div>
+
+                <div class="info">
+                  <span>Statut</span>
+                  <strong>${f.status}</strong>
+                </div>
+
+                <div class="info highlight">
+                  <span>Temps restant</span>
+                  <strong>${remainingText}</strong>
+                </div>
+
+              </div>
+
+              <div class="bottom-row">
+
+                <div class="time-row">
+
+                  <div class="time-box">
+                    <span>Heure prévue</span>
+                    <strong>${formatDate(f.scheduledTime)}</strong>
+                  </div>
+
+                  <div class="time-box">
+                    <span>Heure estimée</span>
+                    <strong>${formatDate(f.estimatedTime || f.actualTime)}</strong>
+                  </div>
+
+                </div>
+
+                <a
+                  class="flight-link"
+                  target="_blank"
+                  href="https://www.flightradar24.com/data/flights/${flightId}"
+                >
+                  Suivre ce vol
+                </a>
+
+              </div>
+
             </div>
 
-          </div>
-        </article>
-      `;
-    }).join("");
+          </article>
+        `;
+      })
+      .join("");
 
   } catch (err) {
     console.error(err);
