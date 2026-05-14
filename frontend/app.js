@@ -8,11 +8,38 @@ const AIRPORTS = [
   { code: "TLS", name: "Toulouse", keywords: ["toulouse", "blagnac"] },
   { code: "CDG", name: "Paris Charles de Gaulle", keywords: ["paris", "charles de gaulle", "cdg"] },
   { code: "ORY", name: "Paris Orly", keywords: ["paris", "orly"] },
-  { code: "NCE", name: "Nice", keywords: ["nice", "cote d azur"] },
-  { code: "MRS", name: "Marseille", keywords: ["marseille"] },
-  { code: "LYS", name: "Lyon", keywords: ["lyon"] },
-  { code: "LHR", name: "Londres Heathrow", keywords: ["londres", "heathrow"] },
-  { code: "LTN", name: "Londres Luton", keywords: ["londres", "luton"] }
+  { code: "NCE", name: "Nice", keywords: ["nice", "cote d azur", "côte d'azur"] },
+  { code: "MRS", name: "Marseille", keywords: ["marseille", "provence"] },
+  { code: "LYS", name: "Lyon", keywords: ["lyon", "saint exupery", "saint-exupéry"] },
+
+  { code: "LHR", name: "Londres Heathrow", keywords: ["londres", "london", "heathrow"] },
+  { code: "LTN", name: "Londres Luton", keywords: ["londres", "london", "luton"] },
+  { code: "LGW", name: "Londres Gatwick", keywords: ["londres", "london", "gatwick"] },
+  { code: "STN", name: "Londres Stansted", keywords: ["londres", "london", "stansted"] },
+
+  { code: "AMS", name: "Amsterdam Schiphol", keywords: ["amsterdam", "schiphol"] },
+  { code: "MAD", name: "Madrid Barajas", keywords: ["madrid", "barajas"] },
+  { code: "BCN", name: "Barcelone El Prat", keywords: ["barcelone", "barcelona"] },
+  { code: "FCO", name: "Rome Fiumicino", keywords: ["rome", "fiumicino"] },
+  { code: "FRA", name: "Francfort", keywords: ["francfort", "frankfurt"] },
+  { code: "MUC", name: "Munich", keywords: ["munich", "münchen"] },
+  { code: "DUB", name: "Dublin", keywords: ["dublin"] },
+
+  { code: "JFK", name: "New York JFK", keywords: ["new york", "nyc", "jfk"] },
+  { code: "EWR", name: "Newark", keywords: ["new york", "newark", "ewr"] },
+  { code: "LGA", name: "New York LaGuardia", keywords: ["new york", "laguardia", "lga"] },
+  { code: "LAX", name: "Los Angeles", keywords: ["los angeles", "la", "lax"] },
+  { code: "MIA", name: "Miami", keywords: ["miami"] },
+  { code: "ORD", name: "Chicago O'Hare", keywords: ["chicago", "ohare", "o'hare"] },
+
+  { code: "DXB", name: "Dubai", keywords: ["dubai", "dubaï"] },
+  { code: "DOH", name: "Doha", keywords: ["doha", "qatar"] },
+  { code: "IST", name: "Istanbul", keywords: ["istanbul"] },
+
+  { code: "HND", name: "Tokyo Haneda", keywords: ["tokyo", "haneda"] },
+  { code: "NRT", name: "Tokyo Narita", keywords: ["tokyo", "narita"] },
+  { code: "SIN", name: "Singapour Changi", keywords: ["singapour", "singapore", "changi"] },
+  { code: "BKK", name: "Bangkok Suvarnabhumi", keywords: ["bangkok", "suvarnabhumi"] }
 ];
 
 const AIRPORT_NAMES = Object.fromEntries(
