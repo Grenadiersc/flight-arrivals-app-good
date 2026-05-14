@@ -158,6 +158,33 @@ function getAirlineInitials(name) {
     .toUpperCase();
 }
 
+function getAirlineLogo(airlineName) {
+  const name = String(airlineName || "").toLowerCase();
+
+  const logos = {
+    "air france": "https://logo.clearbit.com/airfrance.com",
+    "ryanair": "https://logo.clearbit.com/ryanair.com",
+    "easyjet": "https://logo.clearbit.com/easyjet.com",
+    "klm": "https://logo.clearbit.com/klm.com",
+    "british": "https://logo.clearbit.com/britishairways.com",
+    "british airways": "https://logo.clearbit.com/britishairways.com",
+    "lufthansa": "https://logo.clearbit.com/lufthansa.com",
+    "transavia": "https://logo.clearbit.com/transavia.com",
+    "iberia": "https://logo.clearbit.com/iberia.com",
+    "emirates": "https://logo.clearbit.com/emirates.com",
+    "qatar": "https://logo.clearbit.com/qatarairways.com",
+    "turkish": "https://logo.clearbit.com/turkishairlines.com",
+    "vueling": "https://logo.clearbit.com/vueling.com",
+    "volotea": "https://logo.clearbit.com/volotea.com",
+    "ita": "https://logo.clearbit.com/ita-airways.com",
+    "brussels": "https://logo.clearbit.com/brusselsairlines.com"
+  };
+
+  const match = Object.keys(logos).find(key => name.includes(key));
+
+  return match ? logos[match] : null;
+}
+
 function getTimeDetail(minutes, direction) {
   if (minutes === null || minutes === undefined) {
     return "Horaire indisponible";
@@ -421,6 +448,7 @@ async function loadFlights(isAutoRefresh = false) {
         const remainingText = getTimeDetail(f.minutesToFlight, currentDirection);
         const modeLabel = currentDirection === "arrivals" ? "Arrivée" : "Départ";
         const airlineInitials = getAirlineInitials(f.airline);
+	const airlineLogo = getAirlineLogo(f.airline);
 
         const safeFlight = {
           flightNumber: f.flightNumber,
@@ -442,7 +470,13 @@ async function loadFlights(isAutoRefresh = false) {
               <div class="flight-top">
 
                 <div class="flight-title-row">
-                  <div class="airline-logo">${airlineInitials}</div>
+                  <div class="airline-logo">
+  ${
+    airlineLogo
+      ? `<img src="${airlineLogo}" alt="${f.airline}">`
+      : airlineInitials
+  }
+</div>
 
                   <div>
                     <span class="flight-label">${modeLabel}</span>
