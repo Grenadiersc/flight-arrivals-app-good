@@ -665,3 +665,21 @@ body {
     text-align: center;
   }
 }
+@media (max-width: 700px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main {
+    order: 1;
+  }
+
+  .sidebar {
+    order: 2;
+  }
+
+  .hero {
+    margin-bottom: 18px;
+  }
+}
