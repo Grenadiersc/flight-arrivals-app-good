@@ -99,9 +99,8 @@ app.get("/api/flights/:iata/:direction", async (req, res) => {
     const apiDirection = direction === "departures" ? "Departure" : "Arrival";
 
     const now = new Date();
-    const from = new Date(now.getTime() - 60 * 60 * 1000);
-    const to = new Date(now.getTime() + 12 * 60 * 60 * 1000);
-
+    const from = now;
+const to = new Date(now.getTime() + 11 * 60 * 60 * 1000);
     monthlyApiCalls++;
 
     const response = await axios.get(
